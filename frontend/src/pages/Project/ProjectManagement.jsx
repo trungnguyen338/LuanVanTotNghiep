@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Table, Button, Input, Select, Typography, Tag, 
-  Modal, Form, message, Popconfirm, Space, Progress, DatePicker 
+import {
+  Table, Button, Input, Select, Typography, Tag,
+  Modal, Form, message, Popconfirm, Space, Progress, DatePicker
 } from 'antd';
-import { 
-  SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined 
+import {
+  SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import projectService from '../../services/projectService';
@@ -30,7 +30,7 @@ const formatCurrency = (value) => {
 const ProjectManagement = () => {
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
-  
+
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -137,7 +137,6 @@ const ProjectManagement = () => {
       DRAFT: { text: 'Bản nháp', color: 'default' },
       PENDING: { text: 'Chuẩn bị', color: 'warning' },
       PROCESSING: { text: 'Đang thực hiện', color: 'success' },
-      REVISION: { text: 'Đang sửa đổi', color: 'processing' },
       COMPLETED: { text: 'Đã hoàn thành', color: 'success' },
       ON_HOLD: { text: 'Tạm ngưng', color: 'error' }
     };
@@ -172,12 +171,12 @@ const ProjectManagement = () => {
       width: '15%',
       render: (progress) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Progress 
-            percent={progress || 0} 
-            showInfo={false} 
-            size="small" 
+          <Progress
+            percent={progress || 0}
+            showInfo={false}
+            size="small"
             strokeColor={progress === 100 ? '#52c41a' : '#1677ff'}
-            style={{ marginBottom: 0, width: 60 }} 
+            style={{ marginBottom: 0, width: 60 }}
           />
           <Text strong style={{ color: '#1f1f1f' }}>{progress || 0}%</Text>
         </div>
@@ -202,11 +201,11 @@ const ProjectManagement = () => {
       align: 'right',
       render: (_, record) => (
         <Space size="middle">
-          <Button 
+          <Button
             size="small"
             className="action-btn edit-btn"
-            icon={<EditOutlined />} 
-            onClick={() => openModal(record)} 
+            icon={<EditOutlined />}
+            onClick={() => openModal(record)}
             style={{ borderRadius: 4 }}
           >
             Sửa
@@ -219,20 +218,20 @@ const ProjectManagement = () => {
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
           >
-            <Button 
+            <Button
               size="small"
               className="action-btn delete-btn"
-              danger 
-              icon={<DeleteOutlined />} 
+              danger
+              icon={<DeleteOutlined />}
               style={{ borderRadius: 4 }}
             >
               Xóa
             </Button>
           </Popconfirm>
-          <Button 
+          <Button
             size="small"
             type="primary"
-            icon={<SettingOutlined />} 
+            icon={<SettingOutlined />}
             style={{ backgroundColor: '#c25f16', borderColor: '#c25f16', borderRadius: 4, fontWeight: 500 }}
             onClick={() => message.info('Tính năng Quản lý chi tiết dự án đang được xây dựng!')}
           >
@@ -267,20 +266,20 @@ const ProjectManagement = () => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0, color: '#1f1f1f', fontWeight: 800 }}>Danh sách dự án</Title>
-        
+
         <div style={{ display: 'flex', gap: 16 }}>
-          <Input 
+          <Input
             className="search-input"
-            placeholder="Tìm kiếm dự án..." 
-            prefix={<SearchOutlined style={{ color: '#595959' }} />} 
+            placeholder="Tìm kiếm dự án..."
+            prefix={<SearchOutlined style={{ color: '#595959' }} />}
             style={{ width: 300, backgroundColor: '#fff', border: '1px solid #d9d9d9', borderRadius: 4 }}
             size="large"
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
           />
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
             size="large"
             onClick={() => openModal()}
             style={{ backgroundColor: '#c25f16', borderColor: '#c25f16', borderRadius: 4, fontWeight: 500 }}
@@ -291,11 +290,11 @@ const ProjectManagement = () => {
       </div>
 
       <div style={{ backgroundColor: '#fff', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-        <Table 
+        <Table
           className="project-table"
-          columns={columns} 
-          dataSource={projects} 
-          rowKey="id" 
+          columns={columns}
+          dataSource={projects}
+          rowKey="id"
           loading={loadingProjects}
           pagination={{
             showTotal: (total, range) => <span style={{ fontWeight: 500 }}>Hiển thị {range[0]}-{range[1]} trong số {total} dự án</span>,
@@ -404,7 +403,7 @@ const ProjectManagement = () => {
               <Option value="DRAFT">Bản nháp</Option>
               <Option value="PENDING">Chuẩn bị</Option>
               <Option value="PROCESSING">Đang thực hiện</Option>
-              <Option value="REVISION">Đang sửa đổi</Option>
+
               <Option value="COMPLETED">Đã hoàn thành</Option>
               <Option value="ON_HOLD">Tạm ngưng</Option>
             </Select>
