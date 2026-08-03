@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
@@ -13,7 +12,10 @@ class RoleController extends Controller
      */
     public function index(): JsonResponse
     {
-        $roles = Role::where('status', 1)->get();
+        $roles = Role::where('status', 1)
+            ->whereIn('name', ['Khách hàng', 'Nhà thầu phụ'])
+            ->get();
+
         return response()->json($roles);
     }
 }

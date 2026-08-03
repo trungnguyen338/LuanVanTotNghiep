@@ -9,15 +9,45 @@ class Subcontractor extends Model
 {
     use HasFactory;
 
-    const UPDATED_AT = null;
+    public $timestamps = false;
 
     protected $fillable = [
         'subcontractor_code',
-        'name',
-        'phone',
-        'email',
-        'address',
         'status',
         'user_id',
     ];
+
+    protected $with = ['user'];
+
+    protected $appends = ['name', 'phone', 'email', 'address'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->user ? $this->user->full_name : null;
+    }
+
+    public function getPhoneAttribute()
+    {
+        return $this->user ? $this->user->phone : null;
+    }
+
+    public function getEmailAttribute()
+    {
+        return $this->user ? $this->user->email : null;
+    }
+
+    public function getAddressAttribute()
+    {
+        return $this->user ? $this->user->address : null;
+    }
+
+    public function contractLinks()
+    {
+        return $this->hasMany(DetailContractContractor::class, 'subcontractor_id');
+    }
 }

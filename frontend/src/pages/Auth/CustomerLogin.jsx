@@ -51,7 +51,6 @@ const CustomerLogin = () => {
           <UserOutlined style={{ fontSize: 28, color: '#fff' }} />
         </div>
         <Title level={2} style={{ margin: 0, fontWeight: 600, color: '#1f1f1f' }}>Cổng Khách Hàng</Title>
-        <Text style={{ color: '#8c8c8c', fontSize: '14px' }}>Theo dõi tiến độ dự án của bạn</Text>
       </div>
 
       <Form
@@ -60,7 +59,7 @@ const CustomerLogin = () => {
         onFinish={onFinish}
         layout="vertical"
         requiredMark={(label, info) => (
-          <span><span style={{color: '#ff4d4f'}}>*</span> {label}</span>
+          <span><span style={{ color: '#ff4d4f' }}>*</span> {label}</span>
         )}
       >
         <Form.Item
@@ -69,9 +68,9 @@ const CustomerLogin = () => {
           rules={[{ required: true, message: 'Vui lòng nhập tài khoản!' }]}
           style={{ marginBottom: 24 }}
         >
-          <Input 
-            prefix={<UserOutlined style={iconStyle} />} 
-            placeholder="Nhập Email / Tên đăng nhập" 
+          <Input
+            prefix={<UserOutlined style={iconStyle} />}
+            placeholder="Nhập Email / Tên đăng nhập"
             style={inputStyle}
           />
         </Form.Item>
@@ -82,30 +81,20 @@ const CustomerLogin = () => {
           rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
           style={{ marginBottom: 20 }}
         >
-          <Input.Password 
-            prefix={<LockOutlined style={iconStyle} />} 
-            placeholder="••••••••" 
+          <Input.Password
+            prefix={<LockOutlined style={iconStyle} />}
+            placeholder="••••••••"
             style={inputStyle}
           />
         </Form.Item>
-
-        <Form.Item style={{ marginBottom: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Form.Item name="remember" valuePropName="checked" noStyle>
-              <Checkbox style={{ color: '#262626' }}>Ghi nhớ đăng nhập</Checkbox>
-            </Form.Item>
-            <a href="#" style={{ color: '#1677ff' }}>Hỗ trợ truy cập?</a>
-          </div>
-        </Form.Item>
-
         <Form.Item>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            style={{ 
-              width: '100%', 
-              height: 44, 
-              borderRadius: 6, 
+          <Button
+            type="primary"
+            htmlType="submit"
+            style={{
+              width: '100%',
+              height: 44,
+              borderRadius: 6,
               fontSize: '16px',
               fontWeight: 500,
               backgroundColor: '#1677ff',

@@ -23,19 +23,19 @@ class ProjectCategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:150',
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['message' => 'Dữ liệu không hợp lệ', 'errors' => $validator->errors()], 422);
+            return response()->json(['message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
         }
 
         // Tự động sinh mã danh mục (CAT-xxxx)
         $lastCategory = ProjectCategory::orderBy('id', 'desc')->first();
         $nextId = $lastCategory ? $lastCategory->id + 1 : 1;
-        $categoryCode = 'CAT-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
+        $categoryCode = 'CAT-'.str_pad($nextId, 4, '0', STR_PAD_LEFT);
 
-        $category = new ProjectCategory();
+        $category = new ProjectCategory;
         $category->category_code = $categoryCode;
         $category->name = $request->name;
         $category->status = $request->status;
@@ -48,17 +48,17 @@ class ProjectCategoryController extends Controller
     {
         $category = ProjectCategory::find($id);
 
-        if (!$category) {
+        if (! $category) {
             return response()->json(['message' => 'Không tìm thấy danh mục'], 404);
         }
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:150',
-            'status' => 'required|boolean'
+            'status' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['message' => 'Dữ liệu không hợp lệ', 'errors' => $validator->errors()], 422);
+            return response()->json(['message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
         }
 
         $category->name = $request->name;
@@ -72,13 +72,22 @@ class ProjectCategoryController extends Controller
     {
         $category = ProjectCategory::find($id);
 
-        if (!$category) {
+        if (! $category) {
             return response()->json(['message' => 'Không tìm thấy danh mục'], 404);
         }
 
-        $category->status = 0; // Chuyển sang trạng thái Tạm ngưng thay vì xóa cứng
-        $category->save();
+        if ($category->projects()->exists()) {
+            return response()->json([
+                'message' => 'Danh mục đã được sử dụng trong dự án, không thể xóa.',
+            ], 400);
+        }
 
-        return response()->json(['message' => 'Đã vô hiệu hóa danh mục']);
+        // Bảng project_categories không còn deleted_at nên xóa vĩnh viễn luôn nếu chưa được dùng
+        $category->delete();
+
+        return response()->json([
+            'message' => 'Đã xóa danh mục thành công',
+            'deleted_type' => 'hard'
+        ]);
     }
 }

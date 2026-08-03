@@ -11,14 +11,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['username', 'full_name', 'email', 'phone', 'password_hash', 'role_id', 'status'])]
+#[Fillable(['username', 'full_name', 'email', 'phone', 'address', 'password_hash', 'role_id', 'status'])]
 #[Hidden(['password_hash', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
-    const UPDATED_AT = null;
+    public $timestamps = false;
 
     /**
      * Get the attributes that should be cast.
@@ -47,5 +47,20 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function subcontractor()
+    {
+        return $this->hasOne(Subcontractor::class, 'user_id');
+    }
+
+    public function customer()
+    {
+        return $this->hasOne(Customer::class, 'user_id');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id')->orderBy('id', 'desc');
     }
 }

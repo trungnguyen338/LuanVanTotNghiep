@@ -38,7 +38,7 @@ const HRManagement = () => {
   const createMutation = useMutation({
     mutationFn: hrService.createUser,
     onSuccess: () => {
-      message.success('Thêm nhân sự thành công');
+      message.success('Tạo tài khoản thành công');
       setIsModalVisible(false);
       queryClient.invalidateQueries(['users']);
     },
@@ -50,7 +50,7 @@ const HRManagement = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => hrService.updateUser(id, data),
     onSuccess: () => {
-      message.success('Cập nhật nhân sự thành công');
+      message.success('Cập nhật tài khoản thành công');
       setIsModalVisible(false);
       queryClient.invalidateQueries(['users']);
     },
@@ -61,12 +61,12 @@ const HRManagement = () => {
 
   const deleteMutation = useMutation({
     mutationFn: hrService.deleteUser,
-    onSuccess: () => {
-      message.success('Đã cập nhật trạng thái nhân sự');
+    onSuccess: (data) => {
+      message.success(data?.message || 'Đã thực hiện thao tác thành công');
       queryClient.invalidateQueries(['users']);
     },
-    onError: () => {
-      message.error('Có lỗi xảy ra');
+    onError: (error) => {
+      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
     }
   });
 
@@ -161,7 +161,7 @@ const HRManagement = () => {
             display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
             background: status === 1 ? '#52c41a' : '#faad14', marginRight: 6
           }}></span>
-          {status === 1 ? 'Đang làm việc' : 'Đã nghỉ việc'}
+          {status === 1 ? 'Đang hoạt động' : 'Vô hiệu hóa'}
         </Tag>
       )
     },
@@ -178,8 +178,8 @@ const HRManagement = () => {
             onClick={() => openModal(record)}
           />
           <Popconfirm
-            title="Vô hiệu hóa tài khoản"
-            description="Bạn có chắc chắn muốn chuyển nhân viên này sang trạng thái Đã nghỉ việc?"
+            title="Xóa hoặc vô hiệu hóa tài khoản"
+            description="Tài khoản liên kết với dự án/hợp đồng sẽ bị vô hiệu hóa, tài khoản chưa có dự án sẽ bị xóa hoàn toàn. Bạn có đồng ý?"
             onConfirm={() => deleteMutation.mutate(record.id)}
             okText="Đồng ý"
             cancelText="Hủy"
@@ -198,7 +198,7 @@ const HRManagement = () => {
   ];
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ width: '100%' }}>
       <style>{`
         .hr-table .ant-table-thead > tr > th {
           font-weight: 700;
@@ -243,9 +243,9 @@ const HRManagement = () => {
       `}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <Title level={3} style={{ margin: 0, color: '#1f1f1f', fontWeight: 800 }}>Quản lý nhân sự</Title>
+          <Title level={3} style={{ margin: 0, color: '#1f1f1f', fontWeight: 800 }}>Quản lý tài khoản</Title>
           <Text type="secondary" style={{ fontSize: 14, fontWeight: 500 }}>
-            Quản lý và điều chỉnh thông tin nhân viên trong toàn hệ thống.
+            Quản lý tài khoản đăng nhập của Khách hàng và Nhà thầu phụ.
           </Text>
         </div>
         <Button
@@ -255,7 +255,7 @@ const HRManagement = () => {
           onClick={() => openModal()}
           style={{ backgroundColor: '#c25f16', borderColor: '#c25f16', borderRadius: 4, fontWeight: 500 }}
         >
-          Thêm nhân sự mới
+          Tạo tài khoản mới
         </Button>
       </div>
 
@@ -302,7 +302,7 @@ const HRManagement = () => {
             };
           }}
           pagination={{
-            showTotal: (total, range) => <span style={{ fontWeight: 500 }}>Hiển thị {range[0]}-{range[1]} trên tổng số {total} nhân sự</span>,
+            showTotal: (total, range) => <span style={{ fontWeight: 500 }}>Hiển thị {range[0]}-{range[1]} trên tổng số {total} tài khoản</span>,
             pageSize: 10,
             showSizeChanger: false
           }}
@@ -311,7 +311,7 @@ const HRManagement = () => {
 
       {/* Modal Thêm/Sửa */}
       <Modal
-        title={editingUser ? 'Chỉnh sửa thông tin nhân sự' : 'Thêm nhân sự mới'}
+        title={editingUser ? 'Chỉnh sửa tài khoản' : 'Tạo tài khoản mới'}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
@@ -332,19 +332,25 @@ const HRManagement = () => {
           </Form.Item>
 
           <Form.Item
-            name="username"
-            label="Tên đăng nhập"
-            rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập' }]}
-          >
-            <Input placeholder="Nhập tên đăng nhập" size="large" />
-          </Form.Item>
-
-          <Form.Item
             name="email"
             label="Email"
             rules={[
               { required: true, message: 'Vui lòng nhập email' },
-              { type: 'email', message: 'Email không hợp lệ' }
+              { type: 'email', message: 'Email không hợp lệ' },
+              {
+                validator: (_, value) => {
+                  if (value) {
+                    const hasDiacritics = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]/u.test(value);
+                    if (hasDiacritics) {
+                      return Promise.reject(new Error('Email không được chứa ký tự có dấu'));
+                    }
+                    if (!value.toLowerCase().endsWith('@gmail.com')) {
+                      return Promise.reject(new Error('Email phải có đuôi @gmail.com (ví dụ: @gmail.com)'));
+                    }
+                  }
+                  return Promise.resolve();
+                }
+              }
             ]}
           >
             <Input placeholder="Nhập email" size="large" />
@@ -355,6 +361,13 @@ const HRManagement = () => {
             label="Số điện thoại"
           >
             <Input placeholder="Nhập số điện thoại" size="large" />
+          </Form.Item>
+
+          <Form.Item
+            name="address"
+            label="Địa chỉ"
+          >
+            <Input.TextArea placeholder="Nhập địa chỉ" rows={2} />
           </Form.Item>
 
           <Form.Item
@@ -383,8 +396,8 @@ const HRManagement = () => {
             rules={[{ required: true }]}
           >
             <Select size="large">
-              <Option value={1}>Đang làm việc</Option>
-              <Option value={0}>Đã nghỉ việc</Option>
+              <Option value={1}>Đang hoạt động</Option>
+              <Option value={0}>Vô hiệu hóa</Option>
             </Select>
           </Form.Item>
 
@@ -393,7 +406,7 @@ const HRManagement = () => {
               Hủy
             </Button>
             <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending} style={{ backgroundColor: '#c25f16' }}>
-              {editingUser ? 'Lưu thay đổi' : 'Thêm mới'}
+              {editingUser ? 'Lưu thay đổi' : 'Tạo mới'}
             </Button>
           </Form.Item>
         </Form>

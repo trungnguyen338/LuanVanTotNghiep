@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Table, Button, Input, Select, Typography, Tag, 
-  Modal, Form, message, Popconfirm, Avatar, Space, Tabs
+  Modal, Form, message, Popconfirm, Avatar, Space
 } from 'antd';
 import { 
   SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined 
@@ -12,11 +12,38 @@ import partnerService from '../../services/partnerService';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+const ActionIconButton = ({ icon, tooltip, color, onClick, disabled = false, danger = false }) => (
+  <Popconfirm
+    title={tooltip}
+    okText="Có"
+    cancelText="Không"
+    onConfirm={onClick}
+    disabled={!danger || disabled}
+    okButtonProps={danger ? { danger: true } : undefined}
+  >
+    <Button
+      type="text"
+      icon={icon}
+      disabled={disabled}
+      onClick={danger ? undefined : onClick}
+      style={{
+        width: 34,
+        height: 34,
+        borderRadius: 8,
+        color: disabled ? '#cbd5e1' : color,
+        background: disabled ? '#fafafa' : 'transparent',
+        border: '1px solid transparent',
+        padding: 0
+      }}
+      danger={danger && !disabled}
+    />
+  </Popconfirm>
+);
+
 const PartnerManagement = () => {
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   
-  const [activeTab, setActiveTab] = useState('customers');
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState(null);
   
@@ -24,44 +51,22 @@ const PartnerManagement = () => {
   const [editingPartner, setEditingPartner] = useState(null);
 
   // Queries
-  const { data: customers = [], isLoading: loadingCustomers } = useQuery({
-    queryKey: ['customers', searchText, statusFilter],
-    queryFn: () => partnerService.getCustomers({ search: searchText, status: statusFilter }),
-    enabled: activeTab === 'customers'
-  });
-
   const { data: subcontractors = [], isLoading: loadingSubcontractors } = useQuery({
     queryKey: ['subcontractors', searchText, statusFilter],
-    queryFn: () => partnerService.getSubcontractors({ search: searchText, status: statusFilter }),
-    enabled: activeTab === 'subcontractors'
-  });
-
-  const { data: suppliers = [], isLoading: loadingSuppliers } = useQuery({
-    queryKey: ['suppliers', searchText, statusFilter],
-    queryFn: () => partnerService.getSuppliers({ search: searchText, status: statusFilter }),
-    enabled: activeTab === 'suppliers'
+    queryFn: () => partnerService.getSubcontractors({ search: searchText, status: statusFilter })
   });
 
   // Derived state
-  const currentData = activeTab === 'customers' ? customers 
-                    : activeTab === 'subcontractors' ? subcontractors 
-                    : suppliers;
-                    
-  const currentLoading = activeTab === 'customers' ? loadingCustomers 
-                       : activeTab === 'subcontractors' ? loadingSubcontractors 
-                       : loadingSuppliers;
+  const currentData = subcontractors;
+  const currentLoading = loadingSubcontractors;
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: (data) => {
-      if (activeTab === 'customers') return partnerService.createCustomer(data);
-      if (activeTab === 'subcontractors') return partnerService.createSubcontractor(data);
-      return partnerService.createSupplier(data);
-    },
+    mutationFn: partnerService.createSubcontractor,
     onSuccess: () => {
       message.success('Thêm đối tác thành công');
       setIsModalVisible(false);
-      queryClient.invalidateQueries([activeTab]);
+      queryClient.invalidateQueries(['subcontractors']);
     },
     onError: (error) => {
       message.error(error.response?.data?.message || 'Có lỗi xảy ra');
@@ -69,15 +74,11 @@ const PartnerManagement = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => {
-      if (activeTab === 'customers') return partnerService.updateCustomer(id, data);
-      if (activeTab === 'subcontractors') return partnerService.updateSubcontractor(id, data);
-      return partnerService.updateSupplier(id, data);
-    },
+    mutationFn: ({ id, data }) => partnerService.updateSubcontractor(id, data),
     onSuccess: () => {
       message.success('Cập nhật đối tác thành công');
       setIsModalVisible(false);
-      queryClient.invalidateQueries([activeTab]);
+      queryClient.invalidateQueries(['subcontractors']);
     },
     onError: (error) => {
       message.error(error.response?.data?.message || 'Có lỗi xảy ra');
@@ -85,14 +86,10 @@ const PartnerManagement = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => {
-      if (activeTab === 'customers') return partnerService.deleteCustomer(id);
-      if (activeTab === 'subcontractors') return partnerService.deleteSubcontractor(id);
-      return partnerService.deleteSupplier(id);
-    },
+    mutationFn: partnerService.deleteSubcontractor,
     onSuccess: () => {
       message.success('Đã cập nhật trạng thái đối tác');
-      queryClient.invalidateQueries([activeTab]);
+      queryClient.invalidateQueries(['subcontractors']);
     },
     onError: () => {
       message.error('Có lỗi xảy ra');
@@ -100,45 +97,28 @@ const PartnerManagement = () => {
   });
 
   // Handlers
-  const handleTabChange = (key) => {
-    setActiveTab(key);
-    setSearchText('');
-    setStatusFilter(null);
-  };
-
   const openModal = (partner = null) => {
     setEditingPartner(partner);
     if (partner) {
-      // Map name/full_name for editing
-      const mappedData = { ...partner };
-      if (activeTab === 'customers') mappedData.name = partner.full_name;
-      form.setFieldsValue(mappedData);
+      form.setFieldsValue(partner);
     } else {
       form.resetFields();
-      form.setFieldsValue({ status: activeTab === 'subcontractors' ? 'ACTIVE' : 1 });
+      form.setFieldsValue({ status: 1 });
     }
     setIsModalVisible(true);
   };
 
   const handleSubmit = (values) => {
-    const dataToSend = { ...values };
-    
-    // Map name back to full_name for customers
-    if (activeTab === 'customers') {
-      dataToSend.full_name = dataToSend.name;
-      delete dataToSend.name;
-    }
-
     if (editingPartner) {
-      updateMutation.mutate({ id: editingPartner.id, data: dataToSend });
+      updateMutation.mutate({ id: editingPartner.id, data: values });
     } else {
-      createMutation.mutate(dataToSend);
+      createMutation.mutate(values);
     }
   };
 
   // Utils
   const getAvatarInitials = (name) => {
-    if (!name) return 'PT';
+    if (!name) return 'DT';
     const parts = name.split(' ');
     if (parts.length >= 2) {
       return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
@@ -146,17 +126,12 @@ const PartnerManagement = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const getAvatarColor = (index) => {
-    const colors = ['#1677ff', '#fa8c16', '#52c41a', '#722ed1', '#eb2f96'];
-    return colors[index % colors.length];
-  };
-
   const renderStatus = (status) => {
     const isError = status === 0 || status === 'SUSPENDED';
     return (
       <Tag 
         color={isError ? 'warning' : 'success'} 
-        style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 500 }}
+        style={{ borderRadius: 9999, padding: '3px 12px', fontWeight: 600, marginRight: 0 }}
       >
         <span style={{ 
           display: 'inline-block', width: 6, height: 6, borderRadius: '50%', 
@@ -173,10 +148,11 @@ const PartnerManagement = () => {
       {
         title: 'TÊN ĐỐI TÁC',
         key: 'name',
-        render: (text, record, index) => {
-          const partnerName = activeTab === 'customers' ? record.full_name : record.name;
+        width: 330,
+        render: (text, record) => {
+          const partnerName = record.name;
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
               <Avatar 
                 style={{ 
                   backgroundColor: '#e6f4ff', 
@@ -188,69 +164,88 @@ const PartnerManagement = () => {
               >
                 {getAvatarInitials(partnerName)}
               </Avatar>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <Text strong style={{ fontSize: 14, color: '#1f1f1f' }}>{partnerName}</Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>{record.address || 'Chưa cập nhật địa chỉ'}</Text>
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <Text strong style={{ fontSize: 14, color: '#1f1f1f', whiteSpace: 'normal', lineHeight: 1.4 }}>{partnerName}</Text>
+                <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'normal', lineHeight: 1.4 }}>{record.address || 'Chưa cập nhật địa chỉ'}</Text>
               </div>
             </div>
           );
         }
-      }
-    ];
-
-    if (activeTab === 'customers') {
-      baseColumns.push({
-        title: 'MÃ KHÁCH HÀNG',
-        dataIndex: 'customer_code',
-        key: 'customer_code',
-        render: text => <Text style={{ color: '#1f1f1f', fontWeight: 500 }}>{text}</Text>
-      });
-    } else if (activeTab === 'subcontractors') {
-      baseColumns.push({
+      },
+      {
         title: 'MÃ NHÀ THẦU',
         dataIndex: 'subcontractor_code',
         key: 'subcontractor_code',
-        render: text => <Text style={{ color: '#1f1f1f', fontWeight: 500 }}>{text}</Text>
-      });
-    } else {
-      baseColumns.push({
-        title: 'MÃ SỐ THUẾ',
-        dataIndex: 'tax_code',
-        key: 'tax_code',
-        render: text => <Text style={{ color: '#1f1f1f', fontWeight: 500 }}>{text || 'N/A'}</Text>
-      });
-    }
-
-    baseColumns.push(
+        width: 150,
+        render: text => <Text style={{ color: '#1f1f1f', fontWeight: 500, whiteSpace: 'nowrap' }}>{text}</Text>
+      },
       {
         title: 'EMAIL',
         dataIndex: 'email',
         key: 'email',
-        render: text => <Text style={{ color: '#1f1f1f', fontWeight: 500 }}>{text || 'N/A'}</Text>
+        width: 280,
+        ellipsis: true,
+        render: text => (
+          <Text
+            style={{
+              color: '#1f1f1f',
+              fontWeight: 500,
+              display: 'block',
+              width: '100%',
+              maxWidth: '100%',
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            {text || 'N/A'}
+          </Text>
+        )
       },
       {
         title: 'SỐ ĐIỆN THOẠI',
         dataIndex: 'phone',
         key: 'phone',
-        render: text => <Text style={{ color: '#1f1f1f', fontWeight: 500 }}>{text || 'N/A'}</Text>
+        width: 170,
+        align: 'center',
+        render: text => (
+          <Text
+            style={{
+              color: '#1f1f1f',
+              fontWeight: 500,
+              display: 'block',
+              width: '100%',
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              textAlign: 'center'
+            }}
+          >
+            {text || 'N/A'}
+          </Text>
+        )
       },
       {
         title: 'TRẠNG THÁI',
         dataIndex: 'status',
         key: 'status',
+        width: 160,
+        align: 'center',
         render: renderStatus
       },
       {
         title: 'THAO TÁC',
         key: 'action',
+        width: 120,
         align: 'right',
         render: (_, record) => (
-          <Space size="middle">
-            <Button 
+          <Space size={6}>
+            <Button
               className="action-btn edit-btn"
-              type="text" 
-              icon={<EditOutlined />} 
-              onClick={() => openModal(record)} 
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => openModal(record)}
+              style={{ width: 34, height: 34, borderRadius: 8, padding: 0 }}
             />
             <Popconfirm
               title="Tạm ngưng đối tác"
@@ -260,33 +255,30 @@ const PartnerManagement = () => {
               cancelText="Hủy"
               okButtonProps={{ danger: true }}
             >
-              <Button 
+              <Button
                 className="action-btn delete-btn"
-                type="text" 
-                danger 
-                icon={<DeleteOutlined />} 
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                style={{ width: 34, height: 34, borderRadius: 8, padding: 0 }}
               />
             </Popconfirm>
           </Space>
         )
       }
-    );
+    ];
 
     return baseColumns;
   };
 
-  const getPartnerLabel = () => {
-    if (activeTab === 'customers') return 'khách hàng';
-    if (activeTab === 'subcontractors') return 'nhà thầu phụ';
-    return 'nhà cung cấp';
-  };
-
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ width: '100%' }}>
       <style>{`
         .partner-table .ant-table-thead > tr > th {
           font-weight: 700;
-          color: '#1f1f1f';
+          color: #1f1f1f;
+          background: #fafafa;
+          white-space: nowrap;
         }
         .partner-table .ant-table-tbody > tr:hover > td {
           background-color: #fafafa !important;
@@ -319,20 +311,13 @@ const PartnerManagement = () => {
         .search-input:hover, .search-input:focus {
           border-color: #c25f16 !important;
         }
-        .partner-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
-          color: #c25f16;
-          font-weight: 600;
-        }
-        .partner-tabs .ant-tabs-ink-bar {
-          background: #c25f16;
-        }
       `}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <Title level={3} style={{ margin: 0, color: '#1f1f1f', fontWeight: 800 }}>Quản lý đối tác</Title>
           <Text type="secondary" style={{ fontSize: 14, fontWeight: 500 }}>
-            Quản lý thông tin khách hàng, nhà thầu và nhà cung cấp.
+            Quản lý thông tin nhà thầu phụ thực hiện dự án.
           </Text>
         </div>
         <Button 
@@ -345,18 +330,6 @@ const PartnerManagement = () => {
           Thêm đối tác mới
         </Button>
       </div>
-
-      <Tabs 
-        activeKey={activeTab} 
-        onChange={handleTabChange} 
-        className="partner-tabs"
-        size="large"
-        items={[
-          { key: 'customers', label: 'Quản lý khách hàng' },
-          { key: 'subcontractors', label: 'Quản lý nhà thầu phụ' },
-          { key: 'suppliers', label: 'Quản lý nhà cung cấp vật tư' }
-        ]}
-      />
 
       <div style={{ backgroundColor: '#fff', borderRadius: 8, padding: 16, marginBottom: 16, marginTop: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
         <div style={{ display: 'flex', gap: 16 }}>
@@ -378,17 +351,10 @@ const PartnerManagement = () => {
             value={statusFilter}
             onChange={value => setStatusFilter(value)}
           >
-            {activeTab === 'subcontractors' ? (
-              <>
-                <Option value="ACTIVE">Đang hợp tác</Option>
-                <Option value="SUSPENDED">Tạm ngưng</Option>
-              </>
-            ) : (
-              <>
-                <Option value={1}>Đang hợp tác</Option>
-                <Option value={0}>Tạm ngưng</Option>
-              </>
-            )}
+            <>
+              <Option value={1}>Đang hợp tác</Option>
+              <Option value={0}>Tạm ngưng</Option>
+            </>
           </Select>
         </div>
       </div>
@@ -400,8 +366,10 @@ const PartnerManagement = () => {
           dataSource={currentData} 
           rowKey="id" 
           loading={currentLoading}
+          tableLayout="fixed"
+          scroll={{ x: 1240 }}
           pagination={{
-            showTotal: (total, range) => <span style={{ fontWeight: 500 }}>Hiển thị {range[0]}-{range[1]} trong số {total} đối tác</span>,
+            showTotal: (total, range) => <span style={{ fontWeight: 500 }}>Hiển thị {range[0]}-{range[1]} trong số {total} nhà thầu phụ</span>,
             pageSize: 10,
             showSizeChanger: false
           }}
@@ -410,7 +378,7 @@ const PartnerManagement = () => {
 
       {/* Modal */}
       <Modal
-        title={editingPartner ? `Chỉnh sửa ${getPartnerLabel()}` : `Thêm ${getPartnerLabel()} mới`}
+        title={editingPartner ? 'Chỉnh sửa nhà thầu phụ' : 'Thêm nhà thầu phụ mới'}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
@@ -430,21 +398,29 @@ const PartnerManagement = () => {
             <Input placeholder="Nhập tên" size="large" />
           </Form.Item>
 
-          {activeTab === 'suppliers' && (
-            <Form.Item
-              name="tax_code"
-              label="Mã số thuế"
-            >
-              <Input placeholder="Nhập mã số thuế" size="large" />
-            </Form.Item>
-          )}
-
           <Form.Item
             name="email"
             label="Email"
-            rules={[{ type: 'email', message: 'Email không hợp lệ' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập email' },
+              { type: 'email', message: 'Email không hợp lệ' },
+              {
+                validator: (_, value) => {
+                  if (value) {
+                    const hasDiacritics = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ]/u.test(value);
+                    if (hasDiacritics) {
+                      return Promise.reject(new Error('Email không được chứa ký tự có dấu'));
+                    }
+                    if (!value.toLowerCase().endsWith('@gmail.com')) {
+                      return Promise.reject(new Error('Email phải có đuôi @gmail.com (ví dụ: @gmail.com)'));
+                    }
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
-            <Input placeholder="Nhập email" size="large" />
+            <Input placeholder="Nhập email Gmail" size="large" />
           </Form.Item>
 
           <Form.Item
@@ -467,18 +443,10 @@ const PartnerManagement = () => {
             rules={[{ required: true }]}
           >
             <Select size="large">
-              {activeTab === 'subcontractors' ? (
-                <>
-                  <Option value="ACTIVE">Đang hợp tác</Option>
-                  <Option value="PENDING">Chờ xử lý</Option>
-                  <Option value="SUSPENDED">Tạm ngưng</Option>
-                </>
-              ) : (
-                <>
-                  <Option value={1}>Đang hợp tác</Option>
-                  <Option value={0}>Tạm ngưng</Option>
-                </>
-              )}
+              <>
+                <Option value={1}>Đang hợp tác</Option>
+                <Option value={0}>Tạm ngưng</Option>
+              </>
             </Select>
           </Form.Item>
 
@@ -486,7 +454,7 @@ const PartnerManagement = () => {
             <Button onClick={() => setIsModalVisible(false)} style={{ marginRight: 8 }}>
               Hủy
             </Button>
-            <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending} style={{ backgroundColor: '#c25f16' }}>
+            <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending} style={{ backgroundColor: '#c25f16', borderColor: '#c25f16' }}>
               {editingPartner ? 'Lưu thay đổi' : 'Thêm mới'}
             </Button>
           </Form.Item>

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  Table, Button, Input, Select, Typography, Tag, 
-  Modal, Form, message, Popconfirm, Space, Progress, DatePicker 
+import {
+  Table, Button, Input, Select, Typography, Tag,
+  Modal, Form, message, Popconfirm, Space, Progress, DatePicker
 } from 'antd';
-import { 
-  SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined 
+import {
+  SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import projectService from '../../services/projectService';
 import projectCategoryService from '../../services/projectCategoryService';
 import partnerService from '../../services/partnerService';
-import hrService from '../../services/hrService';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -18,19 +18,15 @@ const { Option } = Select;
 
 const formatCurrency = (value) => {
   if (!value) return '0 VNĐ';
-  if (value >= 1000000000) {
-    return (value / 1000000000).toFixed(1).replace('.0', '') + ' Tỷ VNĐ';
-  }
-  if (value >= 1000000) {
-    return (value / 1000000).toFixed(1).replace('.0', '') + ' Triệu VNĐ';
-  }
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  const numVal = Number(value);
+  return new Intl.NumberFormat('vi-VN').format(numVal) + ' VNĐ';
 };
 
 const ProjectManagement = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
-  
+
   const [searchText, setSearchText] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -49,11 +45,6 @@ const ProjectManagement = () => {
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
     queryFn: () => partnerService.getCustomers({})
-  });
-
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => hrService.getUsers({})
   });
 
   // Mutations
@@ -103,7 +94,9 @@ const ProjectManagement = () => {
       });
     } else {
       form.resetFields();
-      form.setFieldsValue({ status: 'PENDING' });
+      form.setFieldsValue({
+        status: 'PENDING',
+      });
     }
     setIsModalVisible(true);
   };
@@ -157,11 +150,11 @@ const ProjectManagement = () => {
       title: 'Tên dự án',
       dataIndex: 'name',
       key: 'name',
-      width: '25%',
+      width: 320,
       render: (text, record) => (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <Text strong style={{ color: '#1f1f1f', fontSize: 14 }}>{text}</Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>{record.project_code}</Text>
+          <Text strong style={{ color: '#1f1f1f', fontSize: 14, whiteSpace: 'normal', lineHeight: 1.4 }}>{text}</Text>
+          <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{record.project_code}</Text>
         </div>
       )
     },
@@ -169,15 +162,16 @@ const ProjectManagement = () => {
       title: 'Tiến độ',
       dataIndex: 'progress',
       key: 'progress',
-      width: '15%',
+      width: 180,
+      align: 'center',
       render: (progress) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Progress 
-            percent={progress || 0} 
-            showInfo={false} 
-            size="small" 
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Progress
+            percent={progress || 0}
+            showInfo={false}
+            size="small"
             strokeColor={progress === 100 ? '#52c41a' : '#1677ff'}
-            style={{ marginBottom: 0, width: 60 }} 
+            style={{ marginBottom: 0, width: 60 }}
           />
           <Text strong style={{ color: '#1f1f1f' }}>{progress || 0}%</Text>
         </div>
@@ -187,26 +181,29 @@ const ProjectManagement = () => {
       title: 'Ngân sách',
       dataIndex: 'budget',
       key: 'budget',
-      width: '15%',
-      render: (budget) => <Text style={{ color: '#1f1f1f', fontWeight: 500 }}>{formatCurrency(budget)}</Text>
+      width: 180,
+      align: 'center',
+      render: (budget) => <Text style={{ color: '#1f1f1f', fontWeight: 500, whiteSpace: 'nowrap' }}>{formatCurrency(budget)}</Text>
     },
     {
       title: 'Trạng thái',
       key: 'status',
-      width: '15%',
+      width: 180,
+      align: 'center',
       render: (_, record) => renderStatus(record.status, record.expected_end_date, record.progress)
     },
     {
       title: 'Thao tác',
       key: 'action',
-      align: 'right',
+      width: 260,
+      align: 'center',
       render: (_, record) => (
-        <Space size="middle">
-          <Button 
+        <Space size={8}>
+          <Button
             size="small"
             className="action-btn edit-btn"
-            icon={<EditOutlined />} 
-            onClick={() => openModal(record)} 
+            icon={<EditOutlined />}
+            onClick={() => openModal(record)}
             style={{ borderRadius: 4 }}
           >
             Sửa
@@ -219,22 +216,22 @@ const ProjectManagement = () => {
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
           >
-            <Button 
+            <Button
               size="small"
               className="action-btn delete-btn"
-              danger 
-              icon={<DeleteOutlined />} 
+              danger
+              icon={<DeleteOutlined />}
               style={{ borderRadius: 4 }}
             >
               Xóa
             </Button>
           </Popconfirm>
-          <Button 
+          <Button
             size="small"
             type="primary"
-            icon={<SettingOutlined />} 
+            icon={<SettingOutlined />}
             style={{ backgroundColor: '#c25f16', borderColor: '#c25f16', borderRadius: 4, fontWeight: 500 }}
-            onClick={() => message.info('Tính năng Quản lý chi tiết dự án đang được xây dựng!')}
+            onClick={() => navigate(`/projects/${record.id}`)}
           >
             Quản lý
           </Button>
@@ -244,12 +241,13 @@ const ProjectManagement = () => {
   ];
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ width: '100%' }}>
       <style>{`
         .project-table .ant-table-thead > tr > th {
           font-weight: 700;
-          color: '#1f1f1f';
+          color: #1f1f1f;
           background-color: #fafafa;
+          white-space: nowrap;
         }
         .project-table .ant-table-tbody > tr:hover > td {
           background-color: #fafafa !important;
@@ -267,20 +265,20 @@ const ProjectManagement = () => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0, color: '#1f1f1f', fontWeight: 800 }}>Danh sách dự án</Title>
-        
+
         <div style={{ display: 'flex', gap: 16 }}>
-          <Input 
+          <Input
             className="search-input"
-            placeholder="Tìm kiếm dự án..." 
-            prefix={<SearchOutlined style={{ color: '#595959' }} />} 
+            placeholder="Tìm kiếm dự án..."
+            prefix={<SearchOutlined style={{ color: '#595959' }} />}
             style={{ width: 300, backgroundColor: '#fff', border: '1px solid #d9d9d9', borderRadius: 4 }}
             size="large"
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
           />
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
             size="large"
             onClick={() => openModal()}
             style={{ backgroundColor: '#c25f16', borderColor: '#c25f16', borderRadius: 4, fontWeight: 500 }}
@@ -291,12 +289,14 @@ const ProjectManagement = () => {
       </div>
 
       <div style={{ backgroundColor: '#fff', borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
-        <Table 
+        <Table
           className="project-table"
-          columns={columns} 
-          dataSource={projects} 
-          rowKey="id" 
+          columns={columns}
+          dataSource={projects}
+          rowKey="id"
           loading={loadingProjects}
+          tableLayout="fixed"
+          scroll={{ x: 1120 }}
           pagination={{
             showTotal: (total, range) => <span style={{ fontWeight: 500 }}>Hiển thị {range[0]}-{range[1]} trong số {total} dự án</span>,
             pageSize: 10,
@@ -366,19 +366,6 @@ const ProjectManagement = () => {
 
           <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item
-              name="supervisor_id"
-              label="Người giám sát"
-              rules={[{ required: true, message: 'Vui lòng chọn người giám sát' }]}
-              style={{ flex: 1 }}
-            >
-              <Select size="large" placeholder="Chọn người giám sát" showSearch optionFilterProp="children">
-                {users.map(user => (
-                  <Option key={user.id} value={user.id}>{user.full_name} ({user.role?.name})</Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
               name="start_date"
               label="Ngày bắt đầu"
               style={{ flex: 1 }}
@@ -401,10 +388,8 @@ const ProjectManagement = () => {
             rules={[{ required: true }]}
           >
             <Select size="large">
-              <Option value="DRAFT">Bản nháp</Option>
               <Option value="PENDING">Chuẩn bị</Option>
               <Option value="PROCESSING">Đang thực hiện</Option>
-              <Option value="REVISION">Đang sửa đổi</Option>
               <Option value="COMPLETED">Đã hoàn thành</Option>
               <Option value="ON_HOLD">Tạm ngưng</Option>
             </Select>

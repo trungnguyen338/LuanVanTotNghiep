@@ -29,7 +29,11 @@ const AdminLogin = () => {
     onSuccess: (data) => {
       authService.setAuthData(data.access_token, data.user);
       message.success('Đăng nhập thành công!');
-      navigate('/dashboard');
+      if (data.user?.role?.name === 'Nhà thầu phụ') {
+        navigate('/subcontractor/tasks');
+      } else {
+        navigate('/dashboard');
+      }
     },
     onError: (error) => {
       const errorMsg = error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
@@ -47,8 +51,7 @@ const AdminLogin = () => {
   return (
     <div style={{ maxWidth: 360, margin: '0 auto', padding: '0 16px' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <Title level={2} style={{ margin: 0, fontWeight: 600, color: '#1f1f1f' }}>Hệ Thống Quản Trị</Title>
-        <Text style={{ color: '#8c8c8c', fontSize: '14px' }}>Industrial Excellence ERP</Text>
+        <Title level={2} style={{ fontSize: 20, margin: 0, fontWeight: 600, color: '#1f1f1f' }}>Hệ Thống Quản Trị Xây Dựng</Title>
       </div>
 
       <Form
@@ -57,7 +60,7 @@ const AdminLogin = () => {
         onFinish={onFinish}
         layout="vertical"
         requiredMark={(label, info) => (
-          <span><span style={{color: '#ff4d4f'}}>*</span> {label}</span>
+          <span><span style={{ color: '#ff4d4f' }}>*</span> {label}</span>
         )}
       >
         <Form.Item
@@ -66,10 +69,10 @@ const AdminLogin = () => {
           rules={[{ required: true, message: 'Vui lòng nhập Email hoặc Tên đăng nhập!' }]}
           style={{ marginBottom: 24 }}
         >
-          <Input 
-            prefix={<UserOutlined style={iconStyle} />} 
-            placeholder="admin" 
-            style={inputStyle} 
+          <Input
+            prefix={<UserOutlined style={iconStyle} />}
+            placeholder="admin"
+            style={inputStyle}
           />
         </Form.Item>
 
@@ -79,30 +82,21 @@ const AdminLogin = () => {
           rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
           style={{ marginBottom: 20 }}
         >
-          <Input.Password 
-            prefix={<LockOutlined style={iconStyle} />} 
-            placeholder="••••••••" 
-            style={inputStyle} 
+          <Input.Password
+            prefix={<LockOutlined style={iconStyle} />}
+            placeholder="••••••••"
+            style={inputStyle}
           />
         </Form.Item>
 
-        <Form.Item style={{ marginBottom: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Form.Item name="remember" valuePropName="checked" noStyle>
-              <Checkbox style={{ color: '#262626' }}>Ghi nhớ đăng nhập</Checkbox>
-            </Form.Item>
-            <a href="#" style={{ color: '#1677ff' }}>Quên mật khẩu?</a>
-          </div>
-        </Form.Item>
-
         <Form.Item>
-          <Button 
-            type="primary" 
-            htmlType="submit" 
-            style={{ 
-              width: '100%', 
-              height: 44, 
-              borderRadius: 6, 
+          <Button
+            type="primary"
+            htmlType="submit"
+            style={{
+              width: '100%',
+              height: 44,
+              borderRadius: 6,
               fontSize: '16px',
               fontWeight: 500,
               backgroundColor: '#1677ff',

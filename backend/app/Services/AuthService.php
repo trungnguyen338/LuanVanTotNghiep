@@ -42,7 +42,7 @@ class AuthService
         $user = $this->authenticate($data['login_id'], $data['password']);
 
         // Check if user is a Customer
-        if (!$user->role || $user->role->name !== 'Khách hàng') {
+        if (! $user->role || $user->role->name !== 'Khách hàng') {
             throw ValidationException::withMessages([
                 'login_id' => ['Tài khoản này không phải là khách hàng.'],
             ]);
@@ -60,7 +60,7 @@ class AuthService
 
         $user = User::with('role')->where($field, $loginId)->first();
 
-        if (!$user || !Hash::check($password, $user->password_hash)) {
+        if (! $user || ! Hash::check($password, $user->password_hash)) {
             throw ValidationException::withMessages([
                 'login_id' => ['Thông tin đăng nhập không chính xác.'],
             ]);

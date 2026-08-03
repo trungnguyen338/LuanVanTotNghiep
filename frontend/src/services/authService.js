@@ -28,6 +28,15 @@ const authService = {
   },
 
   /**
+   * Change password for the current authenticated user
+   * @param {Object} data { current_password, new_password, new_password_confirmation }
+   */
+  changePassword: async (data) => {
+    const response = await api.post('/auth/change-password', data);
+    return response.data;
+  },
+
+  /**
    * Helper to set auth tokens in localStorage
    * @param {string} token 
    * @param {Object} user 

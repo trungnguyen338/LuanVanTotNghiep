@@ -50,8 +50,8 @@ const ProjectCategoryManagement = () => {
 
   const deleteMutation = useMutation({
     mutationFn: projectCategoryService.deleteCategory,
-    onSuccess: () => {
-      message.success('Đã cập nhật trạng thái danh mục');
+    onSuccess: (res) => {
+      message.success(res?.message || 'Xóa danh mục thành công');
       queryClient.invalidateQueries(['projectCategories']);
     },
     onError: () => {
@@ -85,32 +85,36 @@ const ProjectCategoryManagement = () => {
       title: 'STT',
       key: 'index',
       width: 80,
+      align: 'center',
       render: (text, record, index) => <Text style={{ fontWeight: 500, color: '#595959' }}>{index + 1}</Text>
     },
     {
       title: 'Tên danh mục',
       dataIndex: 'name',
       key: 'name',
-      render: text => <Text style={{ fontWeight: 500, color: '#1f1f1f', fontSize: 14 }}>{text}</Text>
+      width: 560,
+      render: text => <Text style={{ fontWeight: 500, color: '#1f1f1f', fontSize: 14, whiteSpace: 'normal', lineHeight: 1.5 }}>{text}</Text>
     },
     {
       title: 'Số lượng dự án',
       dataIndex: 'projects_count',
       key: 'projects_count',
-      width: 150,
+      width: 180,
+      align: 'center',
       render: text => <Text style={{ fontWeight: 500, color: '#595959' }}>{text || 0}</Text>
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      width: 150,
+      width: 180,
+      align: 'center',
       render: (status) => {
         const isActive = status === 1;
         return (
           <Tag 
             color={isActive ? 'success' : 'warning'} 
-            style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 500 }}
+            style={{ borderRadius: 9999, padding: '3px 12px', fontWeight: 600, marginRight: 0 }}
           >
             <span style={{ 
               display: 'inline-block', width: 6, height: 6, borderRadius: '50%', 
@@ -124,15 +128,16 @@ const ProjectCategoryManagement = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      align: 'right',
-      width: 120,
+      align: 'center',
+      width: 130,
       render: (_, record) => (
-        <Space size="middle">
+        <Space size={6}>
           <Button 
             className="action-btn edit-btn"
             type="text" 
             icon={<EditOutlined />} 
             onClick={() => openModal(record)} 
+            style={{ width: 34, height: 34, borderRadius: 8, padding: 0 }}
           />
           <Popconfirm
             title="Tạm ngưng danh mục"
@@ -141,26 +146,28 @@ const ProjectCategoryManagement = () => {
             okText="Đồng ý"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
-          >
-            <Button 
-              className="action-btn delete-btn"
-              type="text" 
-              danger 
-              icon={<DeleteOutlined />} 
-            />
-          </Popconfirm>
+            >
+              <Button 
+                className="action-btn delete-btn"
+                type="text" 
+                danger 
+                icon={<DeleteOutlined />} 
+                style={{ width: 34, height: 34, borderRadius: 8, padding: 0 }}
+              />
+            </Popconfirm>
         </Space>
       )
     }
   ];
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ width: '100%' }}>
       <style>{`
         .category-table .ant-table-thead > tr > th {
           font-weight: 700;
-          color: '#1f1f1f';
+          color: #1f1f1f;
           background-color: #fafafa;
+          white-space: nowrap;
         }
         .category-table .ant-table-tbody > tr:hover > td {
           background-color: #fafafa !important;
@@ -204,6 +211,8 @@ const ProjectCategoryManagement = () => {
           dataSource={categories} 
           rowKey="id" 
           loading={isLoading}
+          tableLayout="fixed"
+          scroll={{ x: 1130 }}
           pagination={false}
         />
       </div>

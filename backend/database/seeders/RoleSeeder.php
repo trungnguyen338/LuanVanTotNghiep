@@ -12,11 +12,7 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        $roles = [
-            'Kế toán',
-            'Kỹ sư',
-            'Giám sát'
-        ];
+        $roles = [];
 
         foreach ($roles as $roleName) {
             Role::firstOrCreate(
@@ -24,7 +20,7 @@ class RoleSeeder extends Seeder
                 [
                     'permissions' => json_encode(['*']),
                     'level' => 2,
-                    'status' => 1
+                    'status' => 1,
                 ]
             );
         }

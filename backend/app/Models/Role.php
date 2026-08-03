@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['name', 'permissions', 'level', 'status'])]
+#[Fillable(['name', 'permissions', 'status'])]
 class Role extends Model
 {
     use HasFactory;
 
-    const UPDATED_AT = null;
+    public $timestamps = false;
 
     /**
      * Get the users associated with the role.
